@@ -77,6 +77,14 @@ You can deploy your own bot, or use mine: [@chatgpt_karfly_bot](https://t.me/cha
     docker-compose --env-file config/config.env up --build
     ```
 
+Or, using the sqlite, run:
+
+```bash
+docker-compose -f docker-compose-sqlite.yml --env-file config/config.env up --build
+```
+
+
+
 ## ❤️ Top donations
 You can be in this list:
 
