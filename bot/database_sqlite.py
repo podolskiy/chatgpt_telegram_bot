@@ -24,6 +24,7 @@ _USER_TABLE_FIELDS = {
     "current_dialog_id": str,
     "current_chat_mode": str,
     "current_model": str,
+    "n_generated_images": int,
     "n_transcribed_seconds": float,
 }
 
@@ -44,6 +45,7 @@ class SqliteDataBase:
                            "current_dialog_id TEXT, "
                            "current_chat_mode TEXT NOT NULL, "
                            "current_model TEXT NOT NULL, "
+                           "n_generated_images INT NOT NULL,"
                            "n_transcribed_seconds REAL NOT NULL)")
             cursor.execute("CREATE TABLE IF NOT EXISTS dialogs("
                            "_id TEXT PRIMARY KEY NOT NULL, "
@@ -97,6 +99,7 @@ class SqliteDataBase:
                 None,  # current_dialog_id
                 "assistant",  # current_chat_mode
                 config.models["available_text_models"][0],  # current_model
+                0,  # n_generated_images
                 0.0,  # n_transcribed_seconds
             ]
             assert len(user_datas) == len(_USER_TABLE_FIELDS)
