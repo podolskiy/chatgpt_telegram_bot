@@ -21,7 +21,8 @@ enable_message_streaming = config_yaml.get("enable_message_streaming", True)
 return_n_generated_images = config_yaml.get("return_n_generated_images", 1)
 image_size = config_yaml.get("image_size", "512x512")
 n_chat_modes_per_page = config_yaml.get("n_chat_modes_per_page", 5)
-mongodb_uri = f"mongodb://{config_env['MONGODB_HOST']}:{config_env['MONGODB_PORT']}"
+mongodb_uri = f"mongodb://{config_env['MONGODB_HOST']
+                           }:{config_env['MONGODB_PORT']}"
 sqlite_database_uri = config_env['SQLITE_DATABASE_PATH']
 
 # chat_modes
@@ -33,4 +34,5 @@ with open(config_dir / "models.yml", 'r') as f:
     models = yaml.safe_load(f)
 
 # files
-help_group_chat_video_path = Path(__file__).parent.parent.resolve() / "static" / "help_group_chat.mp4"
+help_group_chat_video_path = Path(
+    __file__).parent.parent.resolve() / "static" / "help_group_chat.mp4"

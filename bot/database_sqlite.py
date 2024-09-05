@@ -129,14 +129,18 @@ class SqliteDataBase:
         self.check_if_user_exists(user_id, raise_exception=True)
         with closing(self.db_conn.cursor()) as cursor:
             if key in _USER_TABLE_FIELDS:
-                res = cursor.execute(f"SELECT {key} FROM users WHERE _id='{user_id}' LIMIT 1").fetchone()
+                res = cursor.execute(f"SELECT {key} FROM users WHERE _id='{
+                                     user_id}' LIMIT 1").fetchone()
                 if res is None or len(res) == 0:
-                    raise ValueError(f"User {user_id} does not have a value for {key}")
+                    raise ValueError(
+                        f"User {user_id} does not have a value for {key}")
                 return SqliteDataBase.__from_query_return(res[0], _USER_TABLE_FIELDS[key])
             elif key == "n_used_tokens":
-                res = cursor.execute(f"SELECT * FROM users_{key} WHERE _id='{user_id}'")
+                res = cursor.execute(
+                    f"SELECT * FROM users_{key} WHERE _id='{user_id}'")
                 return dict(map(
-                    lambda item: (str(item[1]), {"n_input_tokens": int(item[2]), "n_output_tokens": int(item[3])}),
+                    lambda item: (str(item[1]), {"n_input_tokens": int(
+                        item[2]), "n_output_tokens": int(item[3])}),
                     res
                 ))
             else:
@@ -147,25 +151,29 @@ class SqliteDataBase:
         if key in _USER_TABLE_FIELDS:
             self.__update_table_row("users", ("_id", user_id), {key: value})
         elif key == "n_used_tokens":
-            raise NotImplementedError(f"Use the update_n_used_tokens to modify the {key}")
+            raise NotImplementedError(
+                f"Use the update_n_used_tokens to modify the {key}")
         else:
             raise NotImplementedError(f"Invalid field: {key}")
 
     def get_dialog_messages(self, user_id: int, dialog_id: Optional[str] = None):
         self.check_if_user_exists(user_id, raise_exception=True)
-        dialog_id = dialog_id or self.get_user_attribute(user_id, "current_dialog_id")
+        dialog_id = dialog_id or self.get_user_attribute(
+            user_id, "current_dialog_id")
         with closing(self.db_conn.cursor()) as cursor:
             res = cursor.execute(f"SELECT user,bot,_date FROM messages "
                                  f"WHERE dialog_id=? AND user_id=? "
                                  f"ORDER BY _date", (dialog_id, user_id))
             return list(map(
-                lambda item: {"user": item[0], "bot": item[1], "date": datetime.fromtimestamp(item[2])},
+                lambda item: {"user": item[0], "bot": item[1],
+                              "date": datetime.fromtimestamp(item[2])},
                 res
             ))
 
     def append_dialog_message(self, user_id: int, new_dialog_message: dict, dialog_id: Optional[str] = None):
         self.check_if_user_exists(user_id, raise_exception=True)
-        dialog_id = dialog_id or self.get_user_attribute(user_id, "current_dialog_id")
+        dialog_id = dialog_id or self.get_user_attribute(
+            user_id, "current_dialog_id")
         self.__insert_table_row("messages", [
             new_dialog_message["date"],  # _date
             user_id,
@@ -175,7 +183,8 @@ class SqliteDataBase:
         ])
 
     def remove_dialog_last_message(self, user_id: int, dialog_id: Optional[str] = None):
-        dialog_id = dialog_id or self.get_user_attribute(user_id, "current_dialog_id")
+        dialog_id = dialog_id or self.get_user_attribute(
+            user_id, "current_dialog_id")
         with closing(self.db_conn.cursor()) as cursor:
             cursor.execute(f"DELETE FROM messages "
                            f"WHERE _date=(SELECT MAX(_date) FROM messages WHERE dialog_id=? LIMIT 1) "

@@ -26,7 +26,8 @@ OPENAI_COMPLETION_OPTIONS = {
 
 class ChatGPT:
     def __init__(self, model="gpt-3.5-turbo"):
-        assert model in {"text-davinci-003", "gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-1106-preview", "gpt-4-vision-preview"}, f"Unknown model: {model}"
+        assert model in {"text-davinci-003", "gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4",
+                         "gpt-4o", "gpt-4-1106-preview", "gpt-4-vision-preview"}, f"Unknown model: {model}"
         self.model = model
 
     async def send_message(self, message, dialog_messages=[], chat_mode="default"):
@@ -38,7 +39,8 @@ class ChatGPT:
         while answer is None:
             try:
                 if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-1106-preview", "gpt-4-vision-preview"}:
-                    messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
+                    messages = self._generate_prompt_messages(
+                        message, dialog_messages, chat_mode)
 
                     r = await openai.ChatCompletion.acreate(
                         model=self.model,
@@ -47,7 +49,8 @@ class ChatGPT:
                     )
                     answer = r.choices[0].message["content"]
                 elif self.model == "text-davinci-003":
-                    prompt = self._generate_prompt(message, dialog_messages, chat_mode)
+                    prompt = self._generate_prompt(
+                        message, dialog_messages, chat_mode)
                     r = await openai.Completion.acreate(
                         engine=self.model,
                         prompt=prompt,
@@ -61,12 +64,14 @@ class ChatGPT:
                 n_input_tokens, n_output_tokens = r.usage.prompt_tokens, r.usage.completion_tokens
             except openai.error.InvalidRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
-                    raise ValueError("Dialog messages is reduced to zero, but still has too many tokens to make completion") from e
+                    raise ValueError(
+                        "Dialog messages is reduced to zero, but still has too many tokens to make completion") from e
 
                 # forget first message in dialog_messages
                 dialog_messages = dialog_messages[1:]
 
-        n_first_dialog_messages_removed = n_dialog_messages_before - len(dialog_messages)
+        n_first_dialog_messages_removed = n_dialog_messages_before - \
+            len(dialog_messages)
 
         return answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
 
@@ -78,8 +83,9 @@ class ChatGPT:
         answer = None
         while answer is None:
             try:
-                if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4","gpt-4o", "gpt-4-1106-preview"}:
-                    messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
+                if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-1106-preview"}:
+                    messages = self._generate_prompt_messages(
+                        message, dialog_messages, chat_mode)
 
                     r_gen = await openai.ChatCompletion.acreate(
                         model=self.model,
@@ -94,14 +100,15 @@ class ChatGPT:
 
                         if "content" in delta:
                             answer += delta.content
-                            n_input_tokens, n_output_tokens = self._count_tokens_from_messages(messages, answer, model=self.model)
+                            n_input_tokens, n_output_tokens = self._count_tokens_from_messages(
+                                messages, answer, model=self.model)
                             n_first_dialog_messages_removed = 0
 
                             yield "not_finished", answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
-                            
 
                 elif self.model == "text-davinci-003":
-                    prompt = self._generate_prompt(message, dialog_messages, chat_mode)
+                    prompt = self._generate_prompt(
+                        message, dialog_messages, chat_mode)
                     r_gen = await openai.Completion.acreate(
                         engine=self.model,
                         prompt=prompt,
@@ -112,8 +119,10 @@ class ChatGPT:
                     answer = ""
                     async for r_item in r_gen:
                         answer += r_item.choices[0].text
-                        n_input_tokens, n_output_tokens = self._count_tokens_from_prompt(prompt, answer, model=self.model)
-                        n_first_dialog_messages_removed = n_dialog_messages_before - len(dialog_messages)
+                        n_input_tokens, n_output_tokens = self._count_tokens_from_prompt(
+                            prompt, answer, model=self.model)
+                        n_first_dialog_messages_removed = n_dialog_messages_before - \
+                            len(dialog_messages)
                         yield "not_finished", answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
 
                 answer = self._postprocess_answer(answer)
@@ -125,7 +134,8 @@ class ChatGPT:
                 # forget first message in dialog_messages
                 dialog_messages = dialog_messages[1:]
 
-        yield "finished", answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed  # sending final answer
+        # sending final answer
+        yield "finished", answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
 
     async def send_vision_message(
         self,
@@ -190,7 +200,7 @@ class ChatGPT:
                     messages = self._generate_prompt_messages(
                         message, dialog_messages, chat_mode, image_buffer
                     )
-                    
+
                     r_gen = await openai.ChatCompletion.acreate(
                         model=self.model,
                         messages=messages,
@@ -254,15 +264,17 @@ class ChatGPT:
         prompt = config.chat_modes[chat_mode]["prompt_start"]
 
         messages = [{"role": "system", "content": prompt}]
-        
+
         for dialog_message in dialog_messages:
-            messages.append({"role": "user", "content": dialog_message["user"]})
-            messages.append({"role": "assistant", "content": dialog_message["bot"]})
-                    
+            messages.append(
+                {"role": "user", "content": dialog_message["user"]})
+            messages.append(
+                {"role": "assistant", "content": dialog_message["bot"]})
+
         if image_buffer is not None:
             messages.append(
                 {
-                    "role": "user", 
+                    "role": "user",
                     "content": [
                         {
                             "type": "text",
@@ -270,15 +282,15 @@ class ChatGPT:
                         },
                         {
                             "type": "image_url",
-                            "image_url" : {
-                              
+                            "image_url": {
+
                                 "url": f"data:image/jpeg;base64,{self._encode_image(image_buffer)}",
-                                "detail":"high"
+                                "detail": "high"
                             }
                         }
                     ]
                 }
-                
+
             )
         else:
             messages.append({"role": "user", "content": message})
@@ -293,7 +305,8 @@ class ChatGPT:
         encoding = tiktoken.encoding_for_model(model)
 
         if model == "gpt-3.5-turbo-16k":
-            tokens_per_message = 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
+            # every message follows <im_start>{role/name}\n{content}<im_end>\n
+            tokens_per_message = 4
             tokens_per_name = -1  # if there's a name, the role is omitted
         elif model == "gpt-3.5-turbo":
             tokens_per_message = 4
@@ -321,7 +334,8 @@ class ChatGPT:
                 for sub_message in message["content"]:
                     if "type" in sub_message:
                         if sub_message["type"] == "text":
-                            n_input_tokens += len(encoding.encode(sub_message["text"]))
+                            n_input_tokens += len(
+                                encoding.encode(sub_message["text"]))
                         elif sub_message["type"] == "image_url":
                             pass
             else:
@@ -330,7 +344,6 @@ class ChatGPT:
                         n_input_tokens += len(encoding.encode(message["text"]))
                     elif message["type"] == "image_url":
                         pass
-
 
         n_input_tokens += 2
 
